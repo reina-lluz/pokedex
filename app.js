@@ -31,19 +31,21 @@ const WEAKNESS_CHART = {
   ice:      ["fighting", "rock", "steel", "fire"],
   dragon:   ["ice", "dragon", "fairy"],
   dark:     ["fighting", "bug", "fairy"],
-  fairy:    ["poison", "steel"],
-};
+  fairy:    ["poison", "steel"]};
 
 const STAT_LABEL = { hp: "HP", attack: "ATK", defense: "DEF",
   "special-attack": "SP.ATK", "special-defense": "SP.DEF", speed: "SPD" };
 const STAT_MAX = 200; // rough visual ceiling for the bar fill %
 
 // ---- state ----------------------------------------------------
+
 let registry = [];        // { id, name } for every Pokémon 1..MAX_ID (lightweight)
 let detailCache = new Map(); // id -> full detail object, fetched lazily
 let filteredIds = [];     // ids matching current search, in current sort order
 let loadedCount = 0;      // how many of filteredIds are rendered
 let currentDetailId = null;
+let activeTypes = [];
+let typeCache = {};
 
 // ---- dom refs ---------------------------------------------------
 const $grid = document.getElementById("cardGrid");
@@ -52,7 +54,6 @@ let currentSort = "id";
 const sortButtons = document.querySelectorAll(".sort-btn");
 const $loadMoreBtn = document.getElementById("loadMoreBtn");
 const $spinner = document.getElementById("spinner");
-const $countReadout = document.getElementById("countReadout");
 const $emptyState = document.getElementById("emptyState");
 
 const $modalBackdrop = document.getElementById("modalBackdrop");
@@ -92,6 +93,26 @@ function weaknessesFor(types) {
   return [...set];
 }
 
+async function getPokemonByType(type){
+
+    if(typeCache[type]){
+        return typeCache[type];
+    }
+
+    const res = await fetch(`${API_BASE}/type/${type}`);
+    const data = await res.json();
+
+    const ids = data.pokemon.map(p=>{
+        return Number(
+            p.pokemon.url.match(/\/pokemon\/(\d+)\//)[1]
+        );
+    });
+
+    typeCache[type]=ids;
+
+    return ids;
+}
+
 // ---- init: build the lightweight registry (id + name only) --------
 async function init() {
   try {
@@ -105,48 +126,67 @@ async function init() {
     applyFilterAndSort({ resetLoaded: true });
     await loadNextPage();
   } catch (err) {
-    $countReadout.textContent = "Couldn't reach PokeAPI — check connection";
     console.error(err);
   }
 }
 
 // ---- filtering + sorting -------------------------------------------
-function applyFilterAndSort({ resetLoaded = false } = {}) {
+async function applyFilterAndSort({ resetLoaded = false } = {}) {
 
     const query = $search.value.trim().toLowerCase();
 
-    filteredIds = registry
-        .filter(p => {
+    let list = [...registry];
 
-            const idStr = pad3(p.id);
+    // SEARCH
+    if (query) {
 
-            const matchesSearch =
-                !query ||
+        list = list.filter(p => {
+
+            const id3 = pad3(p.id);
+
+            return (
                 p.name.includes(query) ||
-                idStr.includes(query) ||
-                String(p.id) === query;
+                id3.includes(query) ||
+                String(p.id) === query
+            );
 
-            const detail = detailCache.get(p.id);
+        });
 
-            const matchesType =
-              activeTypes.length === 0 ||
-              activeTypes.every(type =>
-              detail.types.includes(type)
-              );
+    }
 
-return matchesSearch && matchesType;
+    // FILTER BY TYPE
+    if (activeTypes.length === 1) {
 
-        })
-        .sort((a, b) => {
+        const ids = await getPokemonByType(activeTypes[0]);
 
-            if (currentSort === "name") {
-                return a.name.localeCompare(b.name);
-            }
+        list = list.filter(p => ids.includes(p.id));
 
-            return a.id - b.id;
+    }
 
-        })
-        .map(p => p.id);
+    else if (activeTypes.length === 2) {
+
+        const first = await getPokemonByType(activeTypes[0]);
+        const second = await getPokemonByType(activeTypes[1]);
+
+        list = list.filter(p =>
+            first.includes(p.id) &&
+            second.includes(p.id)
+        );
+
+    }
+
+    // SORT
+    list.sort((a, b) => {
+
+        if (currentSort === "name") {
+            return a.name.localeCompare(b.name);
+        }
+
+        return a.id - b.id;
+
+    });
+
+    filteredIds = list.map(p => p.id);
 
     loadedCount = 0;
 
@@ -424,7 +464,6 @@ const filterSelect = document.getElementById("filterSelect");
 const filterMenu = document.getElementById("filterMenu");
 const selectedTypes = document.getElementById("selectedTypes");
 
-let activeTypes = [];
 
 filterSelect.onclick = ()=>{
 
@@ -433,24 +472,72 @@ filterSelect.onclick = ()=>{
 };
 
 document.querySelectorAll(".filter-pill").forEach(btn=>{
-    btn.onclick=()=>{
-        const type = btn.dataset.type;
-        if(btn.classList.contains("active")){
-          btn.classList.remove("active");
-          activeTypes = activeTypes.filter(t=>t!==type);
 
-        }else{
-            if(activeTypes.length===2)return;
+    btn.onclick = ()=>{
+
+        const type = btn.dataset.type;
+
+        // ALL TYPES
+        if(type === "all"){
+
+            activeTypes = [];
+
+            document
+                .querySelectorAll(".filter-pill")
+                .forEach(p=>p.classList.remove("active"));
+
             btn.classList.add("active");
-            activeTypes.push(type);
+
+            selectedTypes.textContent = "All Types";
+
+            applyFilterAndSort();
+
+            return;
         }
 
-        selectedTypes.textContent =
-            activeTypes.length
-            ? activeTypes.map(t=>t.charAt(0).toUpperCase()+t.slice(1)).join(", ")
-            : "All Types";
+        // remove ALL button highlight
+        document
+            .querySelector(".filter-pill[data-type='all']")
+            .classList.remove("active");
+
+        if(btn.classList.contains("active")){
+
+            btn.classList.remove("active");
+
+            activeTypes =
+                activeTypes.filter(t=>t!==type);
+
+        }else{
+
+            if(activeTypes.length===2)return;
+
+            btn.classList.add("active");
+
+            activeTypes.push(type);
+
+        }
+
+        if(activeTypes.length===0){
+
+            document
+                .querySelector(".filter-pill[data-type='all']")
+                .classList.add("active");
+
+            selectedTypes.textContent="All Types";
+
+        }else{
+
+            selectedTypes.textContent =
+                activeTypes
+                    .map(t=>t.charAt(0).toUpperCase()+t.slice(1))
+                    .join(", ");
+
+        }
+
         applyFilterAndSort();
+
     };
+
 });
 
 document.addEventListener("click",(e)=>{

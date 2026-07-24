@@ -116,8 +116,8 @@ body{
 .console{
   display:flex;
   align-items:flex-end;
-  justify-content:space-between;
-  gap:14px;
+  justify-content:flex-start;
+  gap:24px;
   flex-wrap:wrap;
   background:var(--surface);
   border:1px solid var(--border);
@@ -128,7 +128,7 @@ body{
   position:relative;
   overflow:visible;
 }
-.field{display:flex; flex-direction:column; gap:6px; flex:1 1 220px;}
+.field{display:flex;flex-direction:column;gap:6px;flex:none;}
 .field-narrow{flex:0 1 160px;}
 .field label{
   font-size:11px; font-weight:700; color:var(--ink-dim);
@@ -189,8 +189,12 @@ body{
   outline:none;
 }
 .card-id{
-  font-size:12px; font-weight:700; color:var(--tc, #888);
+  font-size:12px;
+  font-weight:700;
+  color:#000000;
   letter-spacing:0.04em;
+  text-shadow:
+      0 1px 2px rgba(0,0,0,.35);
 }
 .card-img-wrap{
   display:flex; align-items:center; justify-content:center;
@@ -408,7 +412,7 @@ body{
 
 .chip-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
 
-.modal-nav{display:flex; justify-content:space-between; gap:10px;}
+.modal-nav{display:flex; justify-content:space-between; gap:10px;margin-top:20px;}
 .modal-nav .btn{flex:1;}
 
 /* Focus visibility */
@@ -424,10 +428,9 @@ button:focus-visible, input:focus-visible, select:focus-visible{
 }
 
 .filter-dropdown{
-
     position:relative;
-
-    min-width:320px;
+    width:360px;
+    flex:none;
 }
 
 .filter-select{
@@ -471,12 +474,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{
 
 .filter-menu.show{
     display:flex;
-}
-
-.filter-menu.show{
-
-    display:flex;
-
 }
 
 @keyframes dropdown{
@@ -563,5 +560,52 @@ button:focus-visible, input:focus-visible, select:focus-visible{
     position:relative;
 
     width:360px;
+}
 
+/* ==========================
+   Evolution Chain
+========================== */
+
+.evolution-chain{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
+
+.evolution-card{
+    width:80px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    flex-shrink:0;
+}
+
+.evolution-card img{
+    width:60px;
+    height:60px;
+    object-fit:contain;
+}
+
+.evolution-id{
+    font-size:11px;
+    color:#777;
+    margin-top:4px;
+}
+
+.evolution-name{
+    font-size:12px;
+    font-weight:700;
+    margin-top:2px;
+    text-transform:capitalize;
+}
+
+.evolution-arrow{
+    font-size:20px;
+    color:#888;
+    font-weight:bold;
+    margin:0 2px;
 }
