@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pokédex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="topbar">
+      <h1 class="logo">Pokédex</h1>
+    </header>
+
+    <!-- controls -->
+    <section class="console" aria-label="Search and sort controls">
+      <div class="field">
+        <label for="searchInput">Search</label>
+        <input id="searchInput" type="text" placeholder="Name or ID No. e.g. 006 / charizard" autocomplete="off" />
+      </div>
+      <div class="field field-narrow">
+        <label for="sortSelect">Sort by</label>
+        <select id="sortSelect">
+          <option value="id">ID No.</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+      <div class="readout" id="countReadout">loading…</div>
+    </section>
+
+    <!-- card grid -->
+    <main>
+      <section class="grid" id="cardGrid" aria-live="polite"></section>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <p>No matches</p>
+        <span>Try a different name or ID number.</span>
+      </div>
+
+      <div class="load-more-wrap">
+        <button id="loadMoreBtn" class="btn btn-primary">Load 10 more</button>
+        <div class="spinner" id="spinner" hidden><span></span><span></span><span></span></div>
+      </div>
+    </main>
+
+    <footer class="page-footer">
+      <span>Built for the Old.St Labs technical assessment · data via PokeAPI</span>
+    </footer>
+  </div>
+
+  <!-- ===== DETAIL PANEL ===== -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+
+      <div class="modal-scan" id="modalScan" hidden>
+        <div class="spinner"><span></span><span></span><span></span></div>
+        <span>Loading…</span>
+      </div>
+
+      <div class="modal-body" id="modalBody" hidden>
+
+        <div class="modal-banner" id="modalBanner">
+          <button class="modal-back" id="modalClose" aria-label="Back to list">←</button>
+          <span class="modal-banner-title">Pokédex</span>
+          <span class="modal-id" id="modalId">#001</span>
+          <img id="modalImg" class="modal-img" alt="" />
+        </div>
+
+        <div class="modal-content">
+          <h2 class="modal-name" id="modalName">—</h2>
+          <div class="modal-types" id="modalTypes"></div>
+
+          <div class="modal-metrics">
+            <div class="metric">
+              <span class="metric-value" id="modalWeight">—</span>
+              <span class="metric-label">Weight</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value" id="modalHeight">—</span>
+              <span class="metric-label">Height</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value" id="modalCategory">—</span>
+              <span class="metric-label">Category</span>
+            </div>
+          </div>
+
+          <h3 class="section-title">Abilities</h3>
+          <div class="chip-row" id="modalAbilities"></div>
+
+          <h3 class="section-title">Base Stats</h3>
+          <div class="stats-list" id="modalStats"></div>
+
+          <h3 class="section-title">Weak against</h3>
+          <div class="chip-row" id="modalWeakness"></div>
+
+          <div class="modal-nav">
+            <button id="prevBtn" class="btn">← Previous</button>
+            <button id="nextBtn" class="btn">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
