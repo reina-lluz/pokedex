@@ -48,7 +48,8 @@ let currentDetailId = null;
 // ---- dom refs ---------------------------------------------------
 const $grid = document.getElementById("cardGrid");
 const $search = document.getElementById("searchInput");
-const $sort = document.getElementById("sortSelect");
+let currentSort = "id";
+const sortButtons = document.querySelectorAll(".sort-btn");
 const $loadMoreBtn = document.getElementById("loadMoreBtn");
 const $spinner = document.getElementById("spinner");
 const $countReadout = document.getElementById("countReadout");
@@ -71,7 +72,7 @@ const $modalStats = document.getElementById("modalStats");
 const $modalWeakness = document.getElementById("modalWeakness");
 const $prevBtn = document.getElementById("prevBtn");
 const $nextBtn = document.getElementById("nextBtn");
-
+const $modalEvolution = document.getElementById("modalEvolution");
 // ---- helpers ------------------------------------------------------
 function pad3(id) {
   return String(id).padStart(3, "0");
@@ -111,21 +112,50 @@ async function init() {
 
 // ---- filtering + sorting -------------------------------------------
 function applyFilterAndSort({ resetLoaded = false } = {}) {
-  const query = $search.value.trim().toLowerCase();
-  const sortBy = $sort.value;
 
-  filteredIds = registry
-    .filter((p) => {
-      if (!query) return true;
-      const idStr = pad3(p.id);
-      return p.name.includes(query) || idStr.includes(query) || String(p.id) === query;
-    })
-    .sort((a, b) => (sortBy === "name" ? a.name.localeCompare(b.name) : a.id - b.id))
-    .map((p) => p.id);
+    const query = $search.value.trim().toLowerCase();
 
-  loadedCount = 0;
-  $grid.innerHTML = "";
-  if (!resetLoaded) loadNextPage();
+    filteredIds = registry
+        .filter(p => {
+
+            const idStr = pad3(p.id);
+
+            const matchesSearch =
+                !query ||
+                p.name.includes(query) ||
+                idStr.includes(query) ||
+                String(p.id) === query;
+
+            const detail = detailCache.get(p.id);
+
+            const matchesType =
+              activeTypes.length === 0 ||
+              activeTypes.every(type =>
+              detail.types.includes(type)
+              );
+
+return matchesSearch && matchesType;
+
+        })
+        .sort((a, b) => {
+
+            if (currentSort === "name") {
+                return a.name.localeCompare(b.name);
+            }
+
+            return a.id - b.id;
+
+        })
+        .map(p => p.id);
+
+    loadedCount = 0;
+
+    $grid.innerHTML = "";
+
+    if (!resetLoaded) {
+        loadNextPage();
+    }
+
 }
 
 // ---- fetch a single Pokémon's detail (cached) ----------------------
@@ -221,10 +251,31 @@ async function loadNextPage() {
   updateFooterState();
 }
 
+async function fetchEvolutionChain(id){
+    const species = await fetch(`${API_BASE}/pokemon-species/${id}`).then(r=>r.json());
+    const evoUrl = species.evolution_chain.url;
+    const evo = await fetch(evoUrl).then(r=>r.json());
+    const chain=[];
+    function walk(node){
+        const pokemonId = Number(
+            node.species.url.match(/\/pokemon-species\/(\d+)\//)[1]
+        );
+        chain.push({
+            id:pokemonId,
+            name:node.species.name
+        });
+        if(node.evolves_to.length){
+            walk(node.evolves_to[0]);
+        }
+    }
+    walk(evo.chain);
+    return chain;
+}
+
 function updateFooterState() {
   const remaining = filteredIds.length - loadedCount;
   $loadMoreBtn.disabled = remaining <= 0;
-  $loadMoreBtn.textContent = remaining > 0 ? `Load 10 more (${remaining} left)` : "All entries loaded";
+  $loadMoreBtn.textContent = remaining > 0 ? `Load More` : "All entries loaded";
   $countReadout.textContent = `${filteredIds.length} entr${filteredIds.length === 1 ? "y" : "ies"} matched · showing ${loadedCount}`;
   $emptyState.hidden = filteredIds.length !== 0;
   $grid.hidden = filteredIds.length === 0;
@@ -240,7 +291,7 @@ async function openDetail(id) {
 
   try {
     const detail = await fetchDetail(id);
-    renderDetail(detail);
+    await renderDetail(detail);
   } catch (err) {
     $modalScan.innerHTML = `<span>Couldn't load this record</span>`;
     console.error(err);
@@ -250,7 +301,7 @@ async function openDetail(id) {
   $modalBody.hidden = false;
 }
 
-function renderDetail(detail) {
+async function renderDetail(detail) {
   const primaryType = detail.types[0];
 
   // reset banner type classes, apply the current one for the tint gradient
@@ -316,6 +367,17 @@ $modalStats.innerHTML = detail.stats.map((s) => {
     ? weaknesses.map((t) => `<span class="type-chip t-${t}">${t}</span>`).join("")
     : `<span style="color:var(--ink-dim); font-size:12px;">No notable weaknesses</span>`;
 
+    const evolution = await fetchEvolutionChain(detail.id);
+    if ($modalEvolution) {
+      $modalEvolution.innerHTML = evolution.map((p,index)=>`
+        <div class="evolution-card">
+            <img src="${artworkUrl(p.id)}">
+            <div class="evolution-id">#${pad3(p.id)}</div>
+            <div class="evolution-name">${titleCase(p.name)}</div>
+        </div>
+        ${index < evolution.length - 1 ? '<div class="evolution-arrow">→</div>' : ''} `).join("");
+    }
+
   $prevBtn.disabled = detail.id <= 1;
   $nextBtn.disabled = detail.id >= MAX_ID;
 }
@@ -348,13 +410,53 @@ $search.addEventListener("input", () => {
   clearTimeout(searchDebounce);
   searchDebounce = setTimeout(() => applyFilterAndSort(), 220);
 });
-$sort.addEventListener("change", () => applyFilterAndSort());
+sortButtons.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      sortButtons.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentSort = btn.dataset.sort;
+      applyFilterAndSort();
+    });
+});
 $loadMoreBtn.addEventListener("click", loadNextPage);
 
-// infinite-scroll style auto load near bottom of page (in addition to the button)
-window.addEventListener("scroll", () => {
-  const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
-  if (nearBottom && !$loadMoreBtn.disabled) loadNextPage();
+const filterSelect = document.getElementById("filterSelect");
+const filterMenu = document.getElementById("filterMenu");
+const selectedTypes = document.getElementById("selectedTypes");
+
+let activeTypes = [];
+
+filterSelect.onclick = ()=>{
+
+    filterMenu.classList.toggle("show");
+
+};
+
+document.querySelectorAll(".filter-pill").forEach(btn=>{
+    btn.onclick=()=>{
+        const type = btn.dataset.type;
+        if(btn.classList.contains("active")){
+          btn.classList.remove("active");
+          activeTypes = activeTypes.filter(t=>t!==type);
+
+        }else{
+            if(activeTypes.length===2)return;
+            btn.classList.add("active");
+            activeTypes.push(type);
+        }
+
+        selectedTypes.textContent =
+            activeTypes.length
+            ? activeTypes.map(t=>t.charAt(0).toUpperCase()+t.slice(1)).join(", ")
+            : "All Types";
+        applyFilterAndSort();
+    };
+});
+
+document.addEventListener("click",(e)=>{
+    if(!e.target.closest(".filter-dropdown")){
+      filterMenu.classList.remove("show");
+    }
 });
 
 init();

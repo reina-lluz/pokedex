@@ -13,24 +13,83 @@
   <div class="app">
 
     <header class="topbar">
-      <h1 class="logo">Pokédex</h1>
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="pokeball-icon" aria-hidden="true"></span>
+          <span class="logo">Pokédex</span>
+        </div>
+        <div class="topbar-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="searchInput" type="text" placeholder="Search Pokémon by name or ID…" autocomplete="off" />
+        </div>
+        <span class="pokeball-icon pokeball-icon-ghost" aria-hidden="true"></span>
+      </div>
     </header>
 
     <!-- controls -->
-    <section class="console" aria-label="Search and sort controls">
+  <div class="content-wrapper">
+    <section class="console" aria-label="Sort and Filter">
       <div class="field">
-        <label for="searchInput">Search</label>
-        <input id="searchInput" type="text" placeholder="Name or ID No. e.g. 006 / charizard" autocomplete="off" />
+      <label>Sort by</label>
+      <div class="sort-toggle">
+        <button
+            class="sort-btn active"
+            data-sort="id"
+            id="sortIdBtn">
+            ID No.
+        </button>
+
+        <button
+            class="sort-btn"
+            data-sort="name"
+            id="sortNameBtn">
+            Name
+        </button>
+    </div>
+  </div>
+
+    <div class="field filter-dropdown">
+
+<label>Filter by</label>
+
+  <div class="dropdown-wrapper">
+    <div class="filter-select" id="filterSelect">
+      <span id="selectedTypes">
+        All Types
+      </span>
+
+      <span class="filter-arrow">▼</span>
+    </div>
+
+    <div class="filter-menu" id="filterMenu">
+
+        <button class="filter-pill" data-type="normal">Normal</button>
+        <button class="filter-pill" data-type="fire">Fire</button>
+        <button class="filter-pill" data-type="water">Water</button>
+        <button class="filter-pill" data-type="grass">Grass</button>
+        <button class="filter-pill" data-type="electric">Electric</button>
+        <button class="filter-pill" data-type="ice">Ice</button>
+        <button class="filter-pill" data-type="fighting">Fighting</button>
+        <button class="filter-pill" data-type="poison">Poison</button>
+        <button class="filter-pill" data-type="ground">Ground</button>
+        <button class="filter-pill" data-type="flying">Flying</button>
+        <button class="filter-pill" data-type="psychic">Psychic</button>
+        <button class="filter-pill" data-type="bug">Bug</button>
+        <button class="filter-pill" data-type="rock">Rock</button>
+        <button class="filter-pill" data-type="ghost">Ghost</button>
+        <button class="filter-pill" data-type="dragon">Dragon</button>
+        <button class="filter-pill" data-type="dark">Dark</button>
+        <button class="filter-pill" data-type="steel">Steel</button>
+        <button class="filter-pill" data-type="fairy">Fairy</button>
+
       </div>
-      <div class="field field-narrow">
-        <label for="sortSelect">Sort by</label>
-        <select id="sortSelect">
-          <option value="id">ID No.</option>
-          <option value="name">Name</option>
-        </select>
-      </div>
-      <div class="readout" id="countReadout">loading…</div>
-    </section>
+
+    </div>
+
+</section>
 
     <!-- card grid -->
     <main>
@@ -42,13 +101,17 @@
       </div>
 
       <div class="load-more-wrap">
-        <button id="loadMoreBtn" class="btn btn-primary">Load 10 more</button>
+        <button id="loadMoreBtn" class="btn btn-primary">Load More</button>
         <div class="spinner" id="spinner" hidden><span></span><span></span><span></span></div>
       </div>
     </main>
 
+    </main>
+
+  </div>
+
     <footer class="page-footer">
-      <span>Built for the Old.St Labs technical assessment · data via PokeAPI</span>
+      <span>Pokedex 2026</span>
     </footer>
   </div>
 
@@ -97,6 +160,9 @@
 
           <h3 class="section-title">Weak against</h3>
           <div class="chip-row" id="modalWeakness"></div>
+
+          <h3 class="section-title">Evolution Chain</h3>
+          <div id="modalEvolution" class="evolution-chain"></div>
 
           <div class="modal-nav">
             <button id="prevBtn" class="btn">← Previous</button>
