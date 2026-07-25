@@ -58,7 +58,7 @@ const sortButtons = document.querySelectorAll(".sort-btn");
 const $loadMoreBtn = document.getElementById("loadMoreBtn");
 const $spinner = document.getElementById("spinner");
 const $emptyState = document.getElementById("emptyState");
-
+const $errorState = document.getElementById("errorState");
 const $modalBackdrop = document.getElementById("modalBackdrop");
 const $modalClose = document.getElementById("modalClose");
 const $modalScan = document.getElementById("modalScan");
@@ -118,11 +118,10 @@ async function getPokemonByType(type) {
   return ids;
 }
 
-/* ---------------------------------------------------------------
-   Startup — build the lightweight registry (just id + name)
---------------------------------------------------------------- */
 async function init() {
   try {
+    $errorState.hidden = true;
+
     const res = await fetch(`${API_BASE}/pokemon?limit=${MAX_ID}&offset=0`);
     if (!res.ok) throw new Error(`Registry fetch failed: ${res.status}`);
 
@@ -136,6 +135,7 @@ async function init() {
     await loadNextPage();
   } catch (err) {
     console.error(err);
+    $errorState.hidden = false;
   }
 }
 
@@ -499,5 +499,7 @@ document.addEventListener("click", (e) => {
     filterMenu.classList.remove("show");
   }
 });
+
+document.getElementById("retryBtn").addEventListener("click", init);
 
 init();

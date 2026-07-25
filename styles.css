@@ -126,7 +126,6 @@ body{
   overflow:visible;
 }
 .field{display:flex; flex-direction:column; gap:6px; flex:none;}
-.field-narrow{flex:0 1 160px;}
 .field label{
   font-size:11px; font-weight:700; color:var(--ink-dim);
   text-transform:uppercase; letter-spacing:0.06em;
@@ -147,10 +146,6 @@ body{
   box-shadow:0 0 0 3px rgba(79,109,245,0.14);
 }
 .field select{appearance:none; cursor:pointer;}
-.readout{
-  font-size:12px; font-weight:700; color:var(--ink-dim);
-  padding-bottom:10px; white-space:nowrap;
-}
 
 .content-wrapper{
   max-width:1080px;
@@ -239,6 +234,15 @@ body{
   font-size:18px; margin:0 0 6px;
 }
 .empty-state span{font-size:13px;}
+
+.error-state{
+  text-align:center; padding:50px 20px; color:var(--ink-dim);
+}
+.error-state p{
+  font-family:var(--font-display); color:#d63c47; font-weight:700;
+  font-size:18px; margin:0 0 6px;
+}
+.error-state span{font-size:13px; display:block; margin-bottom:14px;}
 
 /* =============================================================
    BUTTONS
@@ -531,26 +535,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{
 .filter-pill[data-type="steel"].active{background:#5c93a8;}
 .filter-pill[data-type="fairy"].active{background:#ea90e0;}
 .filter-pill[data-type="normal"].active{background:#a7a887;}
-
-/* unused elsewhere currently, kept for potential type-swatch use */
-.type-filter.t-normal{background:#a7a887;}
-.type-filter.t-fire{background:#f08030;}
-.type-filter.t-water{background:#4f88d6;}
-.type-filter.t-electric{background:#e8c93b;color:#333;}
-.type-filter.t-grass{background:#5aa845;}
-.type-filter.t-ice{background:#6fcfc0;color:#333;}
-.type-filter.t-fighting{background:#c0345b;}
-.type-filter.t-poison{background:#9c4fa0;}
-.type-filter.t-ground{background:#d3944a;}
-.type-filter.t-flying{background:#8ba7e8;}
-.type-filter.t-psychic{background:#f2637c;}
-.type-filter.t-bug{background:#8ec02a;}
-.type-filter.t-rock{background:#bcae72;color:#333;}
-.type-filter.t-ghost{background:#5468ad;}
-.type-filter.t-dragon{background:#4a6fe0;}
-.type-filter.t-dark{background:#5f5768;}
-.type-filter.t-steel{background:#5c93a8;}
-.type-filter.t-fairy{background:#ea90e0;color:#333;}
 
 /* =============================================================
    SORT TOGGLE
